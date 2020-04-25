@@ -34,6 +34,8 @@ python3 generate-helper-collections.py --host localhost --port 27017 --database 
 
 ```
 
+---
+
 # generate-orders.py
 
 Python script `orders` data and write it in MongoDB collections. Number of orders that will be created and the number of previous days for which the orders will be created is configurable.

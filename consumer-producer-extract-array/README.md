@@ -1,4 +1,4 @@
-# kafka_topic_consumer
+# consumer-producer-extract-array
 Configurable application used to extract array items to a new message each, while keeping the other fields and adding a prefix to them. For example, as in this demo, if we want to extract products from an order so that the info about every product is a new message.
 
 ## Configuration:
