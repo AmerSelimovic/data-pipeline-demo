@@ -1,0 +1,4 @@
+requests==2.22.0
+confluent-kafka==1.2.0
+avro-python3==1.8.2
+confluent-kafka[avro]

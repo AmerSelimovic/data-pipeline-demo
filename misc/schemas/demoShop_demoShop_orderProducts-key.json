@@ -1,0 +1,15 @@
+{
+    "type": "record",
+    "name": "orderProducts",
+    "namespace": "demoShop.demoShop",
+    "fields": [
+        {
+            "name": "id",
+            "type": [
+                "null",
+                "string"
+            ],
+            "default": null
+        }
+    ]
+}

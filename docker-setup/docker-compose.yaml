@@ -1,0 +1,162 @@
+version: '3'
+services:
+  mongodb:
+    image: mongo:4.0.18
+    container_name: demo-mongodb
+    hostname: demo-mongodb
+    environment:
+      - MONGO_DATA_DIR=/data/mongo
+      - MONGO_LOG_DIR=/dev/null
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+      - MONGO_INITDB_DATABASE=admin
+    volumes:
+      - ./data/mongodb/data:/data/db
+    ports:
+      - 27017:27017
+    command: mongod --replSet demoReplica --smallfiles --logpath=/dev/null # --quiet
+  zookeeper:
+    image: confluentinc/cp-zookeeper:5.3.0
+    hostname: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      KAFKA_JMX_HOSTNAME: zookeeper
+    volumes:
+      - ./data/zookeeper/data:/var/lib/zookeeper/data
+  broker:
+    image: confluentinc/cp-kafka:5.3.0
+    hostname: broker
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "39999:39999"
+      - "49999:49999"
+      - "7071:7071"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://broker:9092'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_JMX_PORT: 49999
+      KAFKA_JMX_HOSTNAME: broker
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_MIN_INSYNC_REPLICAS: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_NUM_PARTITIONS: 8
+    volumes:
+      - ./data/kafka/data:/var/lib/kafka/data
+  schema_registry:
+    image: confluentinc/cp-schema-registry:5.3.0
+    hostname: schema_registry
+    depends_on:
+      - zookeeper
+      - broker
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema_registry
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: 'zookeeper:2181'
+  connect:
+    image: confluentinc/cp-kafka-connect:5.3.0
+    hostname: connect
+    depends_on:
+      - zookeeper
+      - broker
+      - schema_registry
+    ports:
+      - "8083:8083"
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: 'broker:9092'
+      CONNECT_REST_ADVERTISED_HOST_NAME: connect
+      CONNECT_REST_PORT: 8083
+      CONNECT_GROUP_ID: demo-connect-group
+      CONNECT_CONFIG_STORAGE_TOPIC: demo-connect-configs
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_FLUSH_INTERVAL_MS: 10000
+      CONNECT_OFFSET_STORAGE_TOPIC: demo-connect-offsets
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_TOPIC: demo-connect-status
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: 'http://schema_registry:8081'
+      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: 'http://schema_registry:8081'
+      CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
+      CONNECT_CONSUMER_FETCH_MAX_WAIT_MS: 1000
+      CONNECT_CONSUMER_FETCH_MIN_BYTES: 1000000
+      CONNECT_CONSUMER_FETCH_MAX_BYTES: 1000001
+      CONNECT_CONSUMER_MAX_PARTITION_FETCH_BYTES: 1000001
+      CONNECT_CONSUMER_MAX_POLL_INTERVAL_MS: 600000
+    command:
+        - bash
+        - -c
+        - |
+          confluent-hub install --no-prompt debezium/debezium-connector-mongodb:1.1.0
+          /etc/confluent/docker/run
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.6.0
+    hostname: elasticsearch
+    container_name: elasticsearch
+    environment:
+      - cluster.name=elasticsearch
+      - bootstrap.memory_lock=true
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - ./data/elastic:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+      - 9300:9300
+  kibana:
+    image: docker.elastic.co/kibana/kibana-oss:6.6.0
+    hostname: kibana
+    container_name: kibana
+    environment:
+      - "ELASTICSEARCH_URL=http://elasticsearch:9200"
+    ports:
+      - 5601:5601
+  schema-ui:
+    image: landoop/schema-registry-ui
+    ports:
+      - "8001:8000"
+    depends_on:
+      - schema_registry
+    environment:
+      SCHEMAREGISTRY_URL: 'http://schema_registry:8081'
+      PROXY: "true"
+  connect-ui:
+    image: landoop/kafka-connect-ui:0.9.7
+    depends_on:
+      - zookeeper
+    ports:
+      - "8002:8000"
+    environment:
+      CONNECT_URL: 'http://connect:8083'
+  kafka-manager:
+    image: hlebalbau/kafka-manager:2.0.0.2
+    ports:
+      - "8003:9000"
+    depends_on:
+      - zookeeper
+    environment:
+      ZK_HOSTS: zookeeper:2181
+      KAFKA_MANAGER_AUTH_ENABLED: "false"
+    command: -Dpidfile.path=/dev/null
+networks:
+   default:
+       external:
+           name: demo_network
+
+
+
+
+
+

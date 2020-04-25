@@ -1,0 +1,17 @@
+{
+    "name": "demo-debezium-source-connector_v1",
+    "config": {
+        "connector.class": "io.debezium.connector.mongodb.MongoDbConnector",
+        "mongodb.hosts": "demoReplica/demo-mongodb:27017",
+        "mongodb.user": "admin",
+        "mongodb.password": "admin",
+        "mongodb.name": "demoShop",
+        "database.whitelist": "demoShop",
+        "collection.whitelist": "demoShop.orders",
+        "mongodb.members.auto.discover": "false",
+        "transforms": "unwrap",
+        "transforms.unwrap.type": "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState",
+        "transforms.unwrap.drop.tombstones": false,
+        "transforms.unwrap.operation.header": true
+    }
+}

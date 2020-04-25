@@ -1,0 +1,19 @@
+version: '2'
+services:
+  cp_extract_array:
+    image: demo/cp_extract_array:0.0.1
+    hostname: cp_extract_array
+    environment:
+      BOOTSTRAP_SERVERS: 'broker:9092'
+      INPUT_TOPIC_NAME: 'demoShop.demoShop.orders'
+      OUTPUT_TOPIC_NAME: 'demoShop.demoShop.orderProducts'
+      SCHEMA_REGISTRY_URL: "http://schema_registry:8081"
+      GROUP_ID: "cpe_consumer_1"
+      AUTO_OFFSET_RESET: 'earliest'
+      ARRAY_NAME: "products"
+      DOCUMENT_FIELD_PREFIX: "order_"
+      CONSUMER_BATCH_SIZE: "100"
+networks:
+  default:
+      external:
+          name: demo_network
