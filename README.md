@@ -24,6 +24,8 @@ This is the path that our data will take:
 
 `Data generator -> MongoDB -> Source connector -> Kafka -> Sink connector -> Elasticsearch`
 
+![alt text](./demo_pipeline.png "Demo pipeline")
+
 The `Source connector -> Kafka -> Sink connector` part is the most important part of this setup. The source connector is an application reading the data from MongoDB using the CDC approach and writting it to Kafka. While the data is in Kafka we will modify it using an additional application which is described later and then write it in Elasticsearch using a sink connector.
 
 The demo setup is divided in 4 directories.
@@ -32,6 +34,8 @@ The demo setup is divided in 4 directories.
 - `source-data-generator`: The data generator applications that will be used to produce example data in our source MongoDB database. Simulates orders made in a shop, where one order has multiple products in it. Described in more details in the source-data-generator README.md.
 - `consumer-producer-extract-array`: Application that consumes `order` messages from Kafka and extracts the products from the `products` array to a new message each. The application is using Kafka Consumer and Producer APIs. Described in more details in the consumer-producer-extract-array README.md.
 - `misc`: The directory containing Avro schemas for the topic created by `consumer-producer-extract-array`, and the configs for Source and Sink connectors. README.md is provided in the directory, and the deploy_schemas.sh script.
+
+---
 
 ## Requirements
 
